@@ -1,0 +1,4 @@
+# lumina-dsh-map bundle patch — insert the client plugin into the web profile.
+- insert:
+    - id: lumina-map
+      name: lumina-dsh-map
