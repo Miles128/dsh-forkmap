@@ -76,6 +76,47 @@ describe("buildMapForest", () => {
     assert.equal(forest.nodes.find((n) => n.id === "b").active, true);
     assert.equal(forest.nodes.find((n) => n.id === "a").active, false);
   });
+
+  it("treats self-parents and dangling parents as roots", () => {
+    const forest = buildMapForest([
+      session("self", { parentId: "self" }),
+      session("dangling", { parentId: "ghost" }),
+    ]);
+
+    assert.deepEqual(forest.roots.sort(), ["dangling", "self"]);
+    for (const n of forest.nodes) assert.equal(n.parentId, "");
+  });
+
+  it("breaks deterministic tie-breaks by id when updatedAt is equal", () => {
+    const forest = buildMapForest([
+      session("root"),
+      session("zz", { parentId: "root", updatedAt: 5 }),
+      session("aa", { parentId: "root", updatedAt: 5 }),
+    ]);
+
+    assert.deepEqual(forest.nodes.find((n) => n.id === "root").childIds, ["aa", "zz"]);
+  });
+
+  it("keeps every visible node reachable from some root", () => {
+    const sessions = [
+      session("r1"),
+      session("r2"),
+      session("c1", { parentId: "r1" }),
+      session("c2", { parentId: "c1" }),
+      session("sub", { parentId: "r2", origin: "subagent" }),
+      session("blank-hidden", { blank: true }),
+    ];
+    const forest = buildMapForest(sessions, { currentId: "" });
+
+    const seen = new Set();
+    const walk = (id) => {
+      if (seen.has(id)) return;
+      seen.add(id);
+      for (const k of forest.nodes.find((n) => n.id === id)?.childIds ?? []) walk(k);
+    };
+    for (const r of forest.roots) walk(r);
+    assert.equal(seen.size, forest.nodes.length);
+  });
 });
 
 describe("computeForestLayout", () => {
@@ -92,5 +133,25 @@ describe("computeForestLayout", () => {
     assert.ok(layout.positions.left.x < layout.positions.right.x);
     assert.ok(layout.width > 0);
     assert.ok(layout.height > 0);
+  });
+
+  it("keeps parent y strictly above child y along a deep chain", () => {
+    const sessions = Array.from({ length: 10 }, (_, i) =>
+      session(`n${i}`, { parentId: i === 0 ? undefined : `n${i - 1}` }),
+    );
+    const layout = computeForestLayout(buildMapForest(sessions));
+
+    for (let i = 1; i < 10; i++) {
+      assert.ok(layout.positions[`n${i - 1}`].y < layout.positions[`n${i}`].y);
+    }
+  });
+
+  it("stacks separate trees vertically without overlap", () => {
+    const layout = computeForestLayout(
+      buildMapForest([session("a1"), session("a2", { parentId: "a1" }), session("b1"), session("b2", { parentId: "b1" })]),
+    );
+
+    assert.ok(layout.positions.a2.y < layout.positions.b1.y);
+    assert.ok(layout.height >= layout.positions.b2.y + layout.nodeHeight);
   });
 });

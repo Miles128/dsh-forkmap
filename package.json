@@ -1,8 +1,12 @@
 {
-  "name": "lumina-dsh-map",
-  "version": "0.1.0",
+  "name": "dsh-forkmap",
+  "version": "1.0.0",
   "description": "DeepSeek Harness Web plugin: conversation map over session fork lineage.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Miles128/dsh-forkmap.git"
+  },
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -56,7 +60,9 @@
     "deepseek-harness",
     "dsh",
     "dsh-plugin",
+    "forkmap",
     "conversation-map",
-    "session-fork"
+    "session-fork",
+    "lineage"
   ]
 }

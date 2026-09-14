@@ -1,4 +1,4 @@
-# lumina-dsh-map bundle patch — insert the client plugin into the web profile.
+# dsh-forkmap bundle patch — insert the client plugin into the web profile.
 - insert:
-    - id: lumina-map
-      name: lumina-dsh-map
+    - id: forkmap
+      name: dsh-forkmap
