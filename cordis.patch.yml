@@ -1,0 +1,4 @@
+# dsh-forkmap bundle patch — insert the client plugin into the web profile.
+- insert:
+    - id: forkmap
+      name: dsh-forkmap
